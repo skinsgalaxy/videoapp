@@ -11,6 +11,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:flutter_background/flutter_background.dart';
+import 'package:flutter/services.dart';
 
 class CameraExampleHome extends StatefulWidget {
   @override
@@ -63,12 +65,27 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
   double _currentScale = 1.0;
   double _baseScale = 1.0;
 
+  //Try to enable Android Background App
+  _enableBackapp() async {
+    final androidConfig = FlutterBackgroundAndroidConfig(
+      notificationTitle: "flutter_background example app",
+      notificationText:
+          "Background notification for keeping the example app running in the background",
+      notificationImportance: AndroidNotificationImportance.Default,
+      notificationIcon: AndroidResource(
+          name: 'background_icon',
+          defType: 'drawable'), // Default is ic_launcher from folder mipmap
+    );
+    await FlutterBackground.initialize(androidConfig: androidConfig);
+  }
+
   // Counting pointers (number of user fingers on screen)
   int _pointers = 0;
 
   @override
   void initState() {
     super.initState();
+    _enableBackapp();
     _ambiguate(WidgetsBinding.instance)?.addObserver(this);
 
     _flashModeControlRowAnimationController = AnimationController(
@@ -105,21 +122,21 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    final CameraController? cameraController = controller;
+  // @override
+  // void didChangeAppLifecycleState(AppLifecycleState state) {
+  //   final CameraController? cameraController = controller;
 
-    // App state changed before we got the chance to initialize.
-    if (cameraController == null || !cameraController.value.isInitialized) {
-      return;
-    }
+  //   // App state changed before we got the chance to initialize.
+  //   if (cameraController == null || !cameraController.value.isInitialized) {
+  //     return;
+  //   }
 
-    if (state == AppLifecycleState.inactive) {
-      cameraController.dispose();
-    } else if (state == AppLifecycleState.resumed) {
-      onNewCameraSelected(cameraController.description);
-    }
-  }
+  //   if (state == AppLifecycleState.inactive) {
+  //     cameraController.dispose();
+  //   } else if (state == AppLifecycleState.resumed) {
+  //     onNewCameraSelected(cameraController.description);
+  //   }
+  // }
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -272,7 +289,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           children: <Widget>[
             IconButton(
               icon: Icon(Icons.flash_on),
-              color: Colors.blue,
+              color: Color.fromARGB(255, 243, 33, 138),
               onPressed: controller != null ? onFlashModeButtonPressed : null,
             ),
             // The exposure and focus mode are currently not supported on the web.
@@ -514,7 +531,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
       children: <Widget>[
         IconButton(
           icon: const Icon(Icons.camera_alt),
-          color: Colors.blue,
+          color: Color.fromARGB(255, 243, 33, 173),
           onPressed: cameraController != null &&
                   cameraController.value.isInitialized &&
                   !cameraController.value.isRecordingVideo
@@ -523,7 +540,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
         ),
         IconButton(
           icon: const Icon(Icons.videocam),
-          color: Colors.blue,
+          color: Color.fromARGB(255, 243, 33, 96),
           onPressed: cameraController != null &&
                   cameraController.value.isInitialized &&
                   !cameraController.value.isRecordingVideo
@@ -570,6 +587,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
   Widget _cameraTogglesRowWidget() {
     final List<Widget> toggles = <Widget>[];
 
+    // ignore: prefer_function_declarations_over_variables
     final onChanged = (CameraDescription? description) {
       if (description == null) {
         return;
@@ -1006,6 +1024,8 @@ Future<void> main() async {
   // Fetch the available cameras before initializing the app.
   try {
     WidgetsFlutterBinding.ensureInitialized();
+    SystemChrome.setPreferredOrientations(
+        [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
     cameras = await availableCameras();
   } on CameraException catch (e) {
     logError(e.code, e.description);
